@@ -1,0 +1,8 @@
+# Lista de arquivos permitidos no repositório
+*
+!/.gitignore
+!/.nojekyll
+!/index.html
+!/README.md
+!/config.example.json
+# Planilhas, configurações privadas e exportações ficam de fora.
