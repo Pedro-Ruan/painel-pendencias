@@ -139,7 +139,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .tab[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .reports{display:flex;flex-direction:column;gap:8px}
 .rep{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
-.rep input{border:1px solid var(--border);background:var(--bg);border-radius:8px;padding:7px 10px;min-width:0;flex:1 1 180px;max-width:280px;font-weight:600}
+.rep input,.rep select{border:1px solid var(--border);background:var(--bg);border-radius:8px;padding:7px 10px;min-width:0;flex:1 1 180px;max-width:280px;font-weight:600}
 .rep span{color:var(--ink2);font-size:13px}
 .sub{font-size:12px;color:var(--ink2);margin:-8px 0 12px}
 .donut{display:flex;flex-wrap:wrap;gap:16px 24px;align-items:center}
@@ -149,7 +149,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 button.dr{cursor:pointer}
 button.dr:hover{background:var(--hover)}
 .dr i{width:10px;height:10px;border-radius:3px}
-.dr .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dr .nm{overflow-wrap:anywhere;white-space:normal}
 .dr b{font-variant-numeric:tabular-nums}
 .dr em{font-style:normal;color:var(--ink2);font-variant-numeric:tabular-nums;min-width:38px;text-align:right}
 .dr.off{opacity:.4}
@@ -176,8 +176,6 @@ button.dr:hover{background:var(--hover)}
       <div class="src" id="src"></div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn" id="config-import" type="button">Importar configuração SUSEP</button>
-      <input id="config-file" type="file" accept=".json,application/json" hidden>
       <button class="btn" id="theme" type="button">Modo escuro</button>
       <button class="btn primary" id="pick" type="button">Carregar relatório</button>
       <input id="file" type="file" accept=".xlsx,.xls,.csv" multiple hidden>
@@ -185,7 +183,7 @@ button.dr:hover{background:var(--hover)}
   </div>
 
   <div class="drop" id="drop">
-    <span>Arraste aqui um ou mais relatórios (.xlsx ou .csv). A empresa vem da coluna EMPRESA do relatório. Carregar o relatório de uma empresa de novo substitui só os dados dela.</span>
+    <span>Arraste aqui um ou mais relatórios (.xlsx ou .csv). A empresa é identificada automaticamente pelo SUSEP. Carregar o relatório de uma empresa de novo substitui só os dados dela.</span>
   </div>
   <div id="msg" hidden></div>
   <section class="panel reports" id="reports" aria-label="Relatórios carregados"></section>
@@ -227,6 +225,7 @@ const ALIAS = {
   produto:['produtolead','produto','lead'],
   envio:['enviodaproposta','envio','datadeenvio','data'],
   modelo:['modelo'],
+  indicacao:['modelodeindicacao','modelodaindicacao','tipoindicacao','tipodeindicacao'],
   proposta:['nproposta','numeroproposta','numproposta','proposta'],
   pend:['selecionaaspendencias','selecionaapendencias','pendencias','pendencia','motivo'],
   vendedor:['vendedor','consultor'],
@@ -235,18 +234,8 @@ const ALIAS = {
   empresa:['empresa','empresas','corretora']
 };
 const titleCase = s => (s===s.toUpperCase()||s===s.toLowerCase()) ? s.toLowerCase().replace(/(^|[\s\/-])\S/g,m=>m.toUpperCase()) : s;
-/* Configuração particular de cada navegador, sem publicação no repositório. */
-let SUSEP_EMPRESA={};
-function validateSusepConfig(config){
-  if(!config || typeof config!=='object' || Array.isArray(config) || !config.susepEmpresa || typeof config.susepEmpresa!=='object' || Array.isArray(config.susepEmpresa)) throw new Error('Use um JSON com o objeto susepEmpresa.');
-  const entries=Object.entries(config.susepEmpresa);
-  if(entries.length>10000)throw new Error('Configuração muito grande.');
-  return Object.fromEntries(entries.map(([code,company])=>{
-    if(!code.trim()||typeof company!=='string'||!company.trim())throw new Error('Cada código deve ter um nome de empresa preenchido.');
-    return [code.trim().toUpperCase(),company.trim()];
-  }));
-}
-try{const config=JSON.parse(localStorage.getItem('pend-susep-config')||'null');if(config)SUSEP_EMPRESA=validateSusepConfig(config);}catch(e){}
+/* Mapeamento SUSEP fixo, aplicado automaticamente na importação. */
+const SUSEP_EMPRESA = {'CMHE2J':'INRI','2GAJ6J':'INRI','CMN32J':'ICX','A805TJ':'ICX'};
 const origemOf = s => {
   if(!s || s==='—') return s ? 'Sem SUSEP' : '';
   if(NORM(s).startsWith('terceiro')) return 'Terceiros';
@@ -256,10 +245,12 @@ const DIMS = [
   {k:'vendedor', label:'Vendedor'},
   {k:'produto', label:'Produto'},
   {k:'modelo', label:'Modelo'},
+  {k:'indicacao', label:'Tipo de indicação', optional:true},
+  {k:'eficiencia', label:'Prioridade de eficiência'},
   {k:'seguradora', label:'Seguradora', optional:true},
   {k:'origem', label:'Origem da venda', optional:true}
 ];
-const HAS = {seguradora:false, susep:false, origem:false};
+const HAS = {seguradora:false, susep:false, origem:false, indicacao:false};
 const KNOWN = ['Em análise','Vistoria Reprovada ou Pendente','Pagamento Pendente','Restrições Cadastrais ou Financeiras','Instalação Rastreador','Existe Outra Proposta Pendente'];
 const colorMap = {};
 function colorOf(r){
@@ -276,7 +267,7 @@ KNOWN.forEach(colorOf);
 let ENT = {};
 function buildEnt(){
   ENT = {};
-  ['modelo','produto','seguradora','susep','origem','empresa','vendedor'].forEach(k=>{
+  ['modelo','produto','seguradora','susep','origem','empresa','vendedor','indicacao','eficiencia'].forEach(k=>{
     const c = {}; DATA.forEach(r=>{ c[r[k]] = (c[r[k]]||0)+1; });
     ENT[k] = {};
     const fixed = (k==='origem'||k==='empresa') ? {'Empresa A':1,'Empresa B':2,Terceiros:4} : {};
@@ -291,7 +282,7 @@ function buildEnt(){
 }
 
 let FILES = [], DATA = [];
-const sel = {vendedor:new Set(),produto:new Set(),modelo:new Set(),seguradora:new Set(),susep:new Set(),origem:new Set(),empresa:new Set(),pend:new Set()};
+const sel = {indicacao:new Set(),eficiencia:new Set(),vendedor:new Set(),produto:new Set(),modelo:new Set(),seguradora:new Set(),susep:new Set(),origem:new Set(),empresa:new Set(),pend:new Set()};
 let query = '', sort = {k:'dias', dir:-1};
 
 /* ---------- leitura da planilha ---------- */
@@ -306,6 +297,13 @@ function parseDate(v){
   if(m) return new Date(+m[1],+m[2]-1,+m[3]);
   return null;
 }
+function normalizeInsurer(value){
+  const text=String(value==null?'':value).trim();
+  if(!text||NORM(text)==='null'||['portoseguro','portoseguroitau','portoseguroazul','portosegurofrota','porto'].includes(NORM(text)))return 'PORTO';
+  return titleCase(text);
+}
+function referralType(value){const text=String(value==null?'':value).trim();return !text||NORM(text)==='null'?'Não informado':text;}
+function efficiencyPriority(model,referral){return NORM(model)==='lead'||(NORM(model)==='indicacao'&&NORM(referral)==='indcriacaoaleatoria');}
 function toRows(json){
   if(!json.length) throw new Error('A planilha está vazia.');
   const keys = Object.keys(json[0]);
@@ -326,10 +324,12 @@ function toRows(json){
       produto: txt(r[map.produto]) || '—',
       envio: parseDate(r[map.envio]),
       modelo: txt(r[map.modelo]) || '—',
+      indicacao: NORM(txt(r[map.modelo]))==='indicacao'?referralType(map.indicacao?r[map.indicacao]:''):'Não se aplica',
+      eficiencia: efficiencyPriority(txt(r[map.modelo]),map.indicacao?r[map.indicacao]:'')?'Impacta eficiência':'Demais pendências',
       proposta: txt(r[map.proposta]) || '—',
       pend: pend.length ? pend : ['Sem motivo informado'],
       vendedor: txt(r[map.vendedor]).split(',')[0].trim() || '—',
-      seguradora: map.seguradora ? (titleCase(txt(r[map.seguradora])) || '—') : '',
+      seguradora: map.seguradora ? normalizeInsurer(r[map.seguradora]) : '',
       susep: map.susep ? (txt(r[map.susep]) || '—') : '',
       origem: map.susep ? origemOf(txt(r[map.susep])) : '',
       empresa: map.empresa ? txt(r[map.empresa]) : ''
@@ -341,13 +341,22 @@ const fmtDate = d => d ? String(d.getDate()).padStart(2,'0')+'/'+String(d.getMon
 const fmtShort = d => String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
 const hhmm = d => String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
 
+function rowsWithCompanies(file){
+  const rows=toRows(file.json);
+  if(file.sample)return rows.map(r=>({...r,empresa:'Exemplo'}));
+  const mapped=code=>SUSEP_EMPRESA[String(code||'').trim().toUpperCase()]||'';
+  const detected=[...new Set(rows.map(r=>mapped(r.susep)).filter(Boolean))];
+  const owner=detected.length===1?detected[0]:'';
+  return rows.map(r=>({...r,empresa:mapped(r.susep)||owner||'Não identificada'}));
+}
 function rebuild(){
   const t = today(); DATA = [];
   FILES.forEach(f=>{
-    toRows(f.json).forEach(r=>{ r.empresa = r.empresa || f.empresa; r.dias = r.envio ? Math.max(0,Math.round((t-r.envio)/86400000)) : null; DATA.push(r); });
+    rowsWithCompanies(f).forEach(r=>{ r.dias = r.envio ? Math.max(0,Math.round((t-r.envio)/86400000)) : null; DATA.push(r); });
   });
   HAS.seguradora = DATA.some(r=>r.seguradora!=='');
   HAS.susep = DATA.some(r=>r.susep!==''); HAS.origem = HAS.susep;
+  HAS.indicacao = DATA.some(r=>NORM(r.modelo)==='indicacao');
   buildEnt();
 }
 function persist(){
@@ -357,13 +366,13 @@ function persist(){
   }catch(e){}
 }
 function clearFilters(){ Object.values(sel).forEach(s=>s.clear()); query=''; $('#q').value=''; }
-const fileEmps = f => [...new Set(toRows(f.json).map(r=>r.empresa||f.empresa))];
+const fileEmps = f => [...new Set(rowsWithCompanies(f).map(r=>r.empresa))];
 function addFile(json, name, fallback){
   toRows(json); // valida antes de aceitar
   const empresa = (fallback || name.replace(/\.[^.]+$/,'').replace(/[_]+/g,' ')).trim() || 'Empresa';
   const nf = {empresa, label:name, time:Date.now(), json, sample:false};
   const emps = fileEmps(nf);
-  FILES = FILES.filter(f=>!f.sample && !fileEmps(f).some(e=>emps.includes(e)));
+  FILES = FILES.filter(f=>!f.sample && (emps.some(e=>e!=='Não identificada')?!fileEmps(f).some(e=>e!=='Não identificada'&&emps.includes(e)):f.label!==name));
   FILES.push(nf);
   rebuild(); persist(); clearFilters(); render();
 }
@@ -407,7 +416,7 @@ function match(r, skip){
   for(const d of DIMS){ if(d.k===skip) continue; const s=sel[d.k]; if(s.size && !s.has(r[d.k])) return false; }
   if(skip!=='empresa' && sel.empresa.size && !sel.empresa.has(r.empresa)) return false;
   if(skip!=='pend' && sel.pend.size && !r.pend.some(p=>sel.pend.has(p))) return false;
-  if(query){ const q=NORM(query); if(!NORM(r.cliente+r.proposta+r.vendedor+r.produto+r.seguradora+r.susep+r.origem+r.empresa).includes(q)) return false; }
+  if(query){ const q=NORM(query); if(!NORM(r.cliente+r.proposta+r.vendedor+r.produto+r.indicacao+r.eficiencia+r.seguradora+r.susep+r.origem+r.empresa).includes(q)) return false; }
   return true;
 }
 const uniq = (rows,k) => [...new Set(rows.map(r=>r[k]))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
@@ -422,10 +431,7 @@ function renderReports(){
   real.forEach(f=>{
     const row = document.createElement('div'); row.className='rep';
     const emps = fileEmps(f), n = FILES.indexOf(f);
-    const hasCol = toRows(f.json).some(r=>r.empresa);
-    const nm = document.createElement(hasCol?'b':'input');
-    if(hasCol){ nm.textContent = emps.join(' · '); nm.style.fontSize='14px'; }
-    else { nm.value=f.empresa; nm.setAttribute('aria-label','Nome da empresa'); nm.onchange = () => { f.empresa = nm.value.trim() || f.empresa; sel.empresa.clear(); rebuild(); persist(); render(); }; }
+    const nm = document.createElement('b'); nm.textContent=emps.join(' · ');nm.style.fontSize='14px';
     const info = document.createElement('span'); info.textContent = toRows(f.json).length+' propostas · '+(f.label||'arquivo')+' · '+hhmm(new Date(f.time));
     const rm = document.createElement('button'); rm.type='button'; rm.className='btn small'; rm.textContent='Remover';
     rm.onclick = () => { FILES.splice(n,1); if(!FILES.length) FILES=[{empresa:'Exemplo',time:Date.now(),json:SAMPLE,sample:true}]; sel.empresa.clear(); rebuild(); persist(); render(); };
@@ -433,12 +439,11 @@ function renderReports(){
   });
 }
 function renderTabs(){
-  const em = empresas(), el = $('#tabs');
-  el.hidden = em.length<2; el.innerHTML='';
-  if(em.length<2) return;
+  const em = empresas().sort((a,b)=>a.localeCompare(b,'pt-BR')), el = $('#tabs');
+  el.hidden = false; el.innerHTML='';
   const mk = (label, on, fn) => { const b=document.createElement('button'); b.type='button'; b.className='tab'; b.textContent=label; b.setAttribute('aria-pressed', on); b.onclick=fn; el.appendChild(b); };
-  mk('Geral', sel.empresa.size===0, ()=>{sel.empresa.clear();render()});
-  em.forEach(e=>mk(e, sel.empresa.size===1 && sel.empresa.has(e), ()=>{sel.empresa.clear();sel.empresa.add(e);render()}));
+  if(em.length>1)mk('Geral', sel.empresa.size===0, ()=>{sel.empresa.clear();render()});
+  em.forEach(e=>mk(e, (sel.empresa.size===1 && sel.empresa.has(e))||(em.length===1&&!sel.empresa.size), ()=>{sel.empresa.clear();sel.empresa.add(e);render()}));
 }
 function renderFilters(){
   const el = $('#filters'); el.innerHTML='';
@@ -519,7 +524,7 @@ function donut(title, sub, items, unit){
 }
 /* itens de uma dimensão, respeitando os outros filtros */
 function dimItems(dim){
-  const base = DATA.filter(r=>match(r,dim)), c = {};
+  const base = DATA.filter(r=>match(r,dim)&&(dim!=='indicacao'||NORM(r.modelo)==='indicacao')), c = {};
   if(dim==='pend') base.forEach(r=>r.pend.forEach(p=>c[p]=(c[p]||0)+1));
   else base.forEach(r=>c[r[dim]]=(c[r[dim]]||0)+1);
   const active = sel[dim].size>0;
@@ -527,7 +532,7 @@ function dimItems(dim){
     name, value, color: dim==='pend' ? colorOf(name) : (ENT[dim][name]||'var(--sx)'),
     off: active && !sel[dim].has(name), pressed: sel[dim].has(name), onclick: ()=>toggle(sel[dim],name)
   }));
-  if(dim!=='pend'){
+  if(dim!=='pend' && dim!=='indicacao'){
     const small = items.filter(i=>!ENT[dim][i.name]);
     if(small.length>1){
       const rest = small.reduce((a,b)=>a+b.value,0);
@@ -611,6 +616,8 @@ let tableView={cols:[],rows:[]};
 function renderTable(rows){
   const multi = empresas().length>1;
   const cols = [['cliente','Cliente'],['produto','Produto'],['modelo','Modelo'],['proposta','Nº Proposta','num'],['envio','Envio'],['dias','Dias parado','num'],['pend','Pendência']];
+  if(HAS.indicacao) cols.splice(3,0,['indicacao','Modelo de indicação']);
+  cols.push(['eficiencia','Prioridade de eficiência']);
   if(HAS.seguradora) cols.push(['seguradora','Seguradora']);
   if(HAS.susep){ cols.push(['susep','SUSEP']); cols.push(['origem','Origem da venda']); }
   cols.push(['vendedor','Vendedor']);
@@ -648,7 +655,7 @@ function generalWorkbook(){
   const {cols,rows}=tableView;
   const data = [cols.map(c=>c[1]), ...rows.map(r=>cols.map(([k])=>k==='envio'?(r.envio||null):k==='pend'?r.pend.join(', '):(r[k]==null?null:r[k])))];
   const sheet = XLSX.utils.aoa_to_sheet(data, {cellDates:true, dateNF:'dd/mm/yyyy'});
-  sheet['!cols'] = cols.map(([k])=>({wch:({empresa:20,cliente:35,produto:22,modelo:20,proposta:20,envio:14,dias:14,pend:55,vendedor:28,seguradora:24,susep:20,origem:22})[k]||20}));
+  sheet['!cols'] = cols.map(([k])=>({wch:({empresa:20,cliente:35,produto:22,modelo:20,proposta:20,envio:14,dias:14,pend:55,vendedor:28,seguradora:24,susep:20,origem:22,indicacao:30,eficiencia:28})[k]||20}));
   sheet['!autofilter'] = {ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:data.length-1,c:cols.length-1}})};
   const book = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(book, sheet, 'Pendências');
@@ -688,11 +695,13 @@ function render(keepFilters){
   const late = rows.filter(r=>r.dias!=null && r.dias>=15).length;
   const cnt = k => Object.entries(rows.reduce((o,r)=>(o[r[k]]=(o[r[k]]||0)+1,o),{})).sort((a,b)=>b[1]-a[1])[0];
   const topV = cnt('vendedor');
+  const priority=rows.filter(r=>r.eficiencia==='Impacta eficiência').length;
   const terc = rows.filter(r=>r.origem==='Terceiros').length;
   $('#kpis').innerHTML =
     '<div class="kpi"><div class="l">Propostas pendentes</div><div class="v">'+rows.length+'</div><div class="s">'+(rows.length===DATA.length?'total do relatório':'com os filtros aplicados')+'</div></div>'+
     '<div class="kpi"><div class="l">Motivo mais comum</div><div class="v t">'+(top?esc(top[0]):'—')+'</div><div class="s">'+(top?top[1]+' ocorrência(s)':'')+'</div></div>'+
     '<div class="kpi"><div class="l">Média de dias parado</div><div class="v">'+(avg==null?'—':avg)+'</div><div class="s">'+(old?'mais antiga: '+old.dias+' dias (proposta '+esc(old.proposta)+') · Produto: '+esc(old.produto):'')+'</div></div>'+
+    '<div class="kpi"><div class="l">Prioridade de eficiência</div><div class="v">'+priority+'</div><div class="s">LEAD + indicação de criação aleatória. Use o filtro para priorizar.</div></div>'+
     (HAS.susep ? '<div class="kpi"><div class="l">Vendas de terceiros</div><div class="v">'+terc+'</div><div class="s">'+(rows.length?Math.round(terc/rows.length*100):0)+'% das pendências, fechadas em outra corretora</div></div>' : '')+
     '<div class="kpi"><div class="l">Com 15 dias ou mais</div><div class="v" style="color:'+(late?'var(--crit)':'inherit')+'">'+late+'</div><div class="s">'+(topV?'mais pendências: '+esc(topV[0])+' ('+topV[1]+')':'')+'</div></div>';
 
@@ -705,6 +714,8 @@ function render(keepFilters){
     stacked('Vendedores por pendência','Propostas de cada vendedor, divididas pelo motivo.','vendedor',rows));
   group(donut('Pendências por motivo','Participação de cada motivo. Clique para filtrar.', dimItems('pend'), 'ocorrências'));
   ch.appendChild(main);
+  if(HAS.indicacao) ch.appendChild(donut('Modelos de indicação','Todos os tipos de indicação. Criação aleatória impacta a eficiência. Clique para filtrar.',dimItems('indicacao')));
+  ch.appendChild(donut('Prioridade de eficiência','LEAD e INDICACAO com IND. CRIACAO ALEATORIA impactam a eficiência. Clique para filtrar.',dimItems('eficiencia')));
   if(HAS.susep) ch.appendChild(donut('Origem da venda','Venda própria de cada empresa (pelo SUSEP) e vendas de terceiros, fechadas em outra corretora. Clique para filtrar.', dimItems('origem')));
   if(HAS.seguradora) ch.appendChild(donut('Propostas por seguradora','Participação de cada seguradora. Clique para filtrar.', dimItems('seguradora')));
   ch.appendChild(donut('Propostas por modelo','Participação de cada modelo. Clique para filtrar.', dimItems('modelo')));
@@ -789,18 +800,6 @@ function updateThemeButton(){const dark=currentTheme()==='dark';$('#theme').text
 $('#theme').onclick=()=>{const theme=currentTheme()==='dark'?'light':'dark';document.documentElement.dataset.theme=theme;try{localStorage.setItem('pend-theme',theme);}catch(e){}updateThemeButton();};
 updateThemeButton();
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',updateThemeButton);
-
-$('#config-import').onclick=()=>$('#config-file').click();
-$('#config-file').onchange=async e=>{
-  const file=e.target.files[0];e.target.value='';if(!file)return;
-  try{
-    if(file.size>1024*1024)throw new Error('O arquivo deve ter até 1 MB.');
-    const config=validateSusepConfig(JSON.parse((await file.text()).replace(/^\uFEFF/,'')));
-    localStorage.setItem('pend-susep-config',JSON.stringify({susepEmpresa:config}));
-    SUSEP_EMPRESA=config;rebuild();clearFilters();render();
-    showMsg('Configuração SUSEP salva somente neste navegador.');
-  }catch(err){showMsg('Não consegui importar a configuração: '+(err.message||err),true);}
-};
 
 /* ---------- início ---------- */
 (function init(){
