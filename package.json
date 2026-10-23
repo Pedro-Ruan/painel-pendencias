@@ -1,0 +1,17 @@
+{
+  "name": "painel-pendencias",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/core.test.cjs tests/browser.test.mjs tests/changes.test.mjs",
+    "test:unit": "node --test tests/core.test.cjs",
+    "build": "node scripts/build.mjs",
+    "preview": "node scripts/serve.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

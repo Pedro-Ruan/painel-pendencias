@@ -1,0 +1,70 @@
+name: Testar e publicar painel
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm test
+  publish:
+    if: github.event_name != 'pull_request'
+    needs: tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          path: production-source
+      - uses: actions/checkout@v6
+        id: develop
+        continue-on-error: true
+        with:
+          ref: develop
+          path: test-source
+      - uses: actions/checkout@v6
+        if: steps.develop.outcome == 'failure'
+        with:
+          ref: main
+          path: test-source
+      - name: Validar as duas versões antes de publicar
+        run: |
+          for source in production-source test-source; do
+            if [ -f "$source/package.json" ]; then
+              (cd "$source" && npm ci && npx playwright install --with-deps chromium && npm test)
+            fi
+          done
+      - run: node scripts/build.mjs --source production-source --out site
+      - run: node scripts/build.mjs --source test-source --out site/teste
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+      - uses: actions/deploy-pages@v4
+        id: deployment

@@ -1,7 +1,21 @@
-# Lista de arquivos permitidos no repositório
+# Apenas código e testes; relatórios, segredos e builds não são versionados.
 *
 !/.gitignore
 !/.nojekyll
 !/index.html
 !/README.md
-# Planilhas, configurações privadas e exportações ficam de fora.
+!/AGENTS.md
+!/package.json
+!/package-lock.json
+!/assets/
+!/assets/*.js
+!/assets/styles.css
+!/assets/LICENSE-SHEETJS.txt
+!/tests/
+!/tests/*.cjs
+!/tests/*.mjs
+!/scripts/
+!/scripts/*.mjs
+!/.github/
+!/.github/workflows/
+!/.github/workflows/*.yml
