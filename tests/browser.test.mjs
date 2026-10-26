@@ -25,8 +25,8 @@ test('regressões no navegador — importação, gráficos, tabela e ambientes',
   const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   try{
     await page.goto(base);await page.waitForSelector('#tbl tbody tr');
-    await t.test('voltou à versão manual, sem controles Goalfy',async()=>{
-      assert.equal(await page.locator('[id^="goalfy"]').count(),0);assert.equal(await page.locator('#pick').count(),1);assert.deepEqual(errors,[]);
+    await t.test('integração Goalfy opcional mantém importação manual e começa desconectada',async()=>{
+      assert.equal(await page.locator('#goalfy-settings').isVisible(),false);assert.equal(await page.evaluate(()=>goalfyConnection),null);assert.equal(await page.locator('#goalfy-refresh').isDisabled(),true);assert.equal(await page.locator('#pick').count(),1);assert.deepEqual(errors,[]);
     });
     await t.test('importação XLSX real aplica produto secundário e conserva os demais produtos',async()=>{
       await loadData(page);assert.equal(await page.evaluate(()=>DATA.find(r=>r.proposta==='1').produto),'CELULAR');assert.equal(await page.evaluate(()=>DATA.find(r=>r.proposta==='2').produto),'VIDA');
@@ -76,7 +76,7 @@ test('regressões no navegador — importação, gráficos, tabela e ambientes',
       const downloadPromise=page.waitForEvent('download');await page.click('#export');const download=await downloadPromise;
       const bytes=Array.from(await readFile(await download.path()));
       const parsed=await page.evaluate(bytes=>{const book=XLSX.read(new Uint8Array(bytes),{type:'array'});return XLSX.utils.sheet_to_json(book.Sheets[book.SheetNames[0]],{header:1});},bytes);
-      assert.equal(parsed[0][0],'Produto');assert.equal(parsed[0].at(-1),'Empresa');assert.equal(parsed.length,2);assert.equal(parsed[1][0],'CELULAR');
+      assert.equal(parsed[0][0],'Produto');assert.equal(parsed[0].at(-1),'Etiquetas');assert.equal(parsed.length,2);assert.equal(parsed[1][0],'CELULAR');
       await page.reload();await page.waitForSelector('th');assert.equal(await page.locator('th').first().getAttribute('data-k'),'produto');
     });
     await t.test('colunas também movem pelo teclado e gráficos filtrados continuam operando',async()=>{

@@ -10,6 +10,16 @@
   function referralType(value){const text=clean(value);return !text||norm(text)==='null'?'Não informado':text;}
   function isThirdParty(susep){return norm(susep).startsWith('terceiro');}
   function efficiencyPriority(model,referral,susep){return ['CMHE2J','CMN32J'].includes(clean(susep).toUpperCase())&&(norm(model)==='lead'||(norm(model)==='indicacao'&&['indcriacaoaleatoria','criacaoaleatoria'].includes(norm(referral))));}
+  function hasTreatmentLabel(value){
+    if(Array.isArray(value))return value.some(hasTreatmentLabel);
+    if(value&&typeof value==='object')return hasTreatmentLabel(value.name??value.nome??value.label??'');
+    const text=clean(value);if(!text)return false;
+    if(text.startsWith('[')||text.startsWith('{')){try{return hasTreatmentLabel(JSON.parse(text));}catch(e){}}
+    return text.split(/[;,|\r\n]+/).some(label=>norm(label.replace(/^[\s"'\[\]]+|[\s"'\[\]]+$/g,''))==='emtratamento');
+  }
+  const AGING_LIMIT=10;
+  const AGING_BANDS=[['0 a 3 dias',0,3],['4 a 7 dias',4,7],['8 a 9 dias',8,9],['10+ dias',AGING_LIMIT,Infinity]];
+  function agingCounts(rows){return AGING_BANDS.map(([,low,high])=>rows.filter(r=>r.dias!=null&&r.dias>=low&&r.dias<=high).length);}
   function orderedKeys(saved,available){return [...new Set([...(Array.isArray(saved)?saved:[]),...available])].filter(key=>available.includes(key));}
   function moveKey(order,from,to){const result=[...order],a=result.indexOf(from),b=result.indexOf(to);if(a<0||b<0||a===b)return result;result.splice(a,1);result.splice(b,0,from);return result;}
   const sections=[
@@ -32,7 +42,7 @@
       return {...item,name:typeof saved?.name==='string'&&saved.name.trim()?saved.name.trim().slice(0,60):item.name};
     }),placements:Object.fromEntries(Object.entries(source.placements||{}).filter(([key,id])=>typeof key==='string'&&sections.some(s=>s.id===id)))};
   }
-  const api={norm,effectiveProduct,normalizeInsurer,referralType,isThirdParty,efficiencyPriority,orderedKeys,moveKey,sections,defaultSection,cleanLayout};
+  const api={hasTreatmentLabel,AGING_LIMIT,AGING_BANDS,agingCounts,norm,effectiveProduct,normalizeInsurer,referralType,isThirdParty,efficiencyPriority,orderedKeys,moveKey,sections,defaultSection,cleanLayout};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
   else root.PendenciasCore=api;
 })(typeof window!=='undefined'?window:globalThis);

@@ -19,3 +19,7 @@
 !/.github/
 !/.github/workflows/
 !/.github/workflows/*.yml
+
+!/integracao/
+!/integracao/worker.mjs
+!/integracao/CONFIGURAR.md

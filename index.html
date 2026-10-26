@@ -6,7 +6,7 @@ try{const theme=localStorage.getItem((location.pathname.split('/').includes('tes
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/styles.css?v=20261023-2">
+<link rel="stylesheet" href="assets/styles.css?v=20261026-3">
 
 <div class="wrap" id="app">
   <div class="top">
@@ -15,12 +15,27 @@ try{const theme=localStorage.getItem((location.pathname.split('/').includes('tes
       <div class="src" id="src"></div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" id="goalfy-toggle" type="button" aria-expanded="false" aria-controls="goalfy-settings">Configurar Goalfy</button>
+      <button class="btn" id="goalfy-refresh" type="button" disabled>Atualizar agora</button>
       <button class="btn" id="theme" type="button">Modo escuro</button>
       <button class="btn primary" id="pick" type="button">Carregar relatório</button>
       <input id="file" type="file" accept=".xlsx,.xls,.csv" multiple hidden>
     </div>
   </div>
 
+  <p class="sync-status" id="goalfy-status" role="status" aria-live="polite">Goalfy desconectado. A importação manual continua disponível.</p>
+  <section class="panel" id="goalfy-settings" hidden aria-label="Configuração Goalfy">
+    <h2>Atualização Goalfy</h2>
+    <p>Conecte usando a senha de acesso do painel. A chave da API fica somente na Cloudflare.</p>
+    <form id="goalfy-connect" class="sync-form">
+      <label>Endereço do serviço <input class="search" id="goalfy-service" type="url" required placeholder="Endereço HTTPS do Worker"></label>
+      <label>Senha de acesso <input class="search" id="goalfy-password" type="password" autocomplete="current-password" required placeholder="Senha DASHBOARD_TOKEN do Worker"></label>
+      <label>Atualização automática <select class="btn" id="goalfy-interval"><option value="0">Desligada — somente manual</option><option value="60">A cada 1 minuto</option><option value="300" selected>A cada 5 minutos</option><option value="600">A cada 10 minutos</option><option value="900">A cada 15 minutos</option></select></label>
+      <label class="sync-remember"><input type="checkbox" id="goalfy-remember" checked> Manter conexão nesta aba</label>
+      <div class="table-actions"><button class="btn primary" id="goalfy-connect-button" type="submit">Conectar</button><button class="btn" id="goalfy-disconnect" type="button" disabled>Desconectar</button></div>
+    </form>
+    <p class="hint">O navegador pode suspender consultas em segundo plano. Ao voltar ao painel, a atualização automática é retomada. A importação manual desconecta a consulta automática.</p>
+  </section>
   <div class="drop" id="drop">
     <span>Arraste aqui um ou mais relatórios (.xlsx ou .csv). A empresa é identificada automaticamente pelo SUSEP. Carregar o relatório de uma empresa de novo substitui só os dados dela.</span>
   </div>
@@ -55,9 +70,11 @@ try{const theme=localStorage.getItem((location.pathname.split('/').includes('tes
   <p class="foot">Dias parado = hoje menos a data de envio da proposta. Quando há mais de um vendedor na célula, vale o primeiro, antes da vírgula.</p>
 </div>
 <div id="tip" role="tooltip"></div>
+<button id="back-to-top" class="btn back-to-top" type="button" aria-label="Voltar ao início">↑ Início</button>
 
 <script src="assets/xlsx.full.min.js"></script>
-<script src="assets/core.js?v=20261023-2"></script>
-<script src="assets/app.js?v=20261023-2"></script>
+<script src="assets/core.js?v=20261026-3"></script>
+<script src="assets/app.js?v=20261026-3"></script>
+<script src="assets/goalfy.js?v=20261026-3"></script>
 
 </body></html>

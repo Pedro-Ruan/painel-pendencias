@@ -49,3 +49,13 @@ test('regressão: somente CMHE2J e CMN32J podem impactar eficiência',()=>{
   assert.equal(core.efficiencyPriority('RENOVACAO','IND. CRIACAO ALEATORIA','CMHE2J'),false);
   assert.equal(core.efficiencyPriority('INDICACAO','IND. BOLA DA VEZ','CMN32J'),false);
 });
+
+test('etiquetas: encontra somente EM TRATAMENTO, não outras etiquetas ou frases',()=>{
+  for(const value of ['EM TRATAMENTO',' em tratamento ','URGENTE; EM TRATAMENTO','OUTRA, EM TRATAMENTO','["OUTRA","EM TRATAMENTO"]',['OUTRA','EM TRATAMENTO']])assert.equal(core.hasTreatmentLabel(value),true,JSON.stringify(value));
+  for(const value of ['',null,undefined,'EM ANDAMENTO','URGENTE','SEM TRATAMENTO','NÃO EM TRATAMENTO','EM TRATAMENTO FUTURO','["EM ANDAMENTO","OUTRA"]'])assert.equal(core.hasTreatmentLabel(value),false,JSON.stringify(value));
+});
+test('regressão: faixas do gráfico são exclusivas e destacam 10+ dias',()=>{
+  const rows=[0,3,4,7,8,9,10,14,15,30,null].map(dias=>({dias}));
+  assert.deepEqual(core.agingCounts(rows),[2,2,2,4]);assert.equal(core.AGING_LIMIT,10);
+  assert.deepEqual(core.AGING_BANDS.map(b=>b[0]),['0 a 3 dias','4 a 7 dias','8 a 9 dias','10+ dias']);
+});

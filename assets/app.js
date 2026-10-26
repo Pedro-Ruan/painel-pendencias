@@ -1,4 +1,4 @@
-const {effectiveProduct,normalizeInsurer,referralType,isThirdParty,efficiencyPriority,orderedKeys,moveKey,sections:DEFAULT_SECTIONS,defaultSection,cleanLayout}=window.PendenciasCore;
+const {hasTreatmentLabel,AGING_LIMIT,AGING_BANDS,agingCounts,effectiveProduct,normalizeInsurer,referralType,isThirdParty,efficiencyPriority,orderedKeys,moveKey,sections:DEFAULT_SECTIONS,defaultSection,cleanLayout}=window.PendenciasCore;
 
 const SAMPLE = [{"Nome do Cliente:": "TESTE1", "Produto - Lead": "CELULAR", "Envio da Proposta": "15/10/2026", "Modelo": "RENOVACAO", "N° Proposta": 10, "Seleciona a(s) Pendência(s)": "Em análise", "Vendedor": "VENDEDOR 1"}, {"Nome do Cliente:": "TESTE2", "Produto - Lead": "BIKE", "Envio da Proposta": "15/10/2026", "Modelo": "LEAD", "N° Proposta": 11, "Seleciona a(s) Pendência(s)": "Vistoria Reprovada ou Pendente", "Vendedor": "VENDEDOR 2"}, {"Nome do Cliente:": "TESTE3", "Produto - Lead": "VIDA", "Envio da Proposta": "09/10/2026", "Modelo": "INDICACAO", "N° Proposta": 12, "Seleciona a(s) Pendência(s)": "Em análise", "Vendedor": "VENDEDOR 3"}, {"Nome do Cliente:": "TESTE8", "Produto - Lead": "BIKE", "Envio da Proposta": "13/10/2026", "Modelo": "LEAD", "N° Proposta": 13, "Seleciona a(s) Pendência(s)": "Em análise", "Vendedor": "VENDEDOR 1"}, {"Nome do Cliente:": "TESTE8", "Produto - Lead": "RESIDENCIAL", "Envio da Proposta": "07/10/2026", "Modelo": "INDICACAO", "N° Proposta": 14, "Seleciona a(s) Pendência(s)": "Em análise", "Vendedor": "VENDEDOR 2"}, {"Nome do Cliente:": "TESTE8", "Produto - Lead": "CELULAR", "Envio da Proposta": "16/10/2026", "Modelo": "LEAD", "N° Proposta": 15, "Seleciona a(s) Pendência(s)": "Em análise", "Vendedor": "VENDEDOR 3"}, {"Nome do Cliente:": "TESTE9", "Produto - Lead": "AUTOMOVEL", "Envio da Proposta": "05/10/2026", "Modelo": "RENOVACAO", "N° Proposta": 16, "Seleciona a(s) Pendência(s)": "Restrições Cadastrais ou Financeiras", "Vendedor": "VENDEDOR 1"}, {"Nome do Cliente:": "TESTE8", "Produto - Lead": "CELULAR", "Envio da Proposta": "16/10/2026", "Modelo": "RENOVACAO", "N° Proposta": 17, "Seleciona a(s) Pendência(s)": "Em análise", "Vendedor": "VENDEDOR 2"}, {"Nome do Cliente:": "TESTE0", "Produto - Lead": "AUTOMOVEL", "Envio da Proposta": "15/10/2026", "Modelo": "INDICACAO", "N° Proposta": 18, "Seleciona a(s) Pendência(s)": "Vistoria Reprovada ou Pendente", "Vendedor": "VENDEDOR 3"}, {"Nome do Cliente:": "TESTE8", "Produto - Lead": "BIKE", "Envio da Proposta": "18/10/2026", "Modelo": "CONTINGENCIA", "N° Proposta": 19, "Seleciona a(s) Pendência(s)": "Em análise", "Vendedor": "VENDEDOR 1"}, {"Nome do Cliente:": "TESTE4", "Produto - Lead": "VIDA", "Envio da Proposta": "14/10/2026", "Modelo": "LEAD", "N° Proposta": 20, "Seleciona a(s) Pendência(s)": "Em análise", "Vendedor": "VENDEDOR 2"}, {"Nome do Cliente:": "TESTE9", "Produto - Lead": "MOTO", "Envio da Proposta": "07/10/2026", "Modelo": "LEAD", "N° Proposta": 21, "Seleciona a(s) Pendência(s)": "Vistoria Reprovada ou Pendente", "Vendedor": "VENDEDOR 3"}, {"Nome do Cliente:": "TESTE8", "Produto - Lead": "MOTO", "Envio da Proposta": "13/10/2026", "Modelo": "INDICACAO", "N° Proposta": 22, "Seleciona a(s) Pendência(s)": "Vistoria Reprovada ou Pendente", "Vendedor": "VENDEDOR 1"}, {"Nome do Cliente:": "TESTE3", "Produto - Lead": "MOTO", "Envio da Proposta": "07/10/2026", "Modelo": "LEAD", "N° Proposta": 23, "Seleciona a(s) Pendência(s)": "Vistoria Reprovada ou Pendente", "Vendedor": "VENDEDOR 2"}, {"Nome do Cliente:": "TESTE4", "Produto - Lead": "VIDA", "Envio da Proposta": "07/10/2026", "Modelo": "INDICACAO", "N° Proposta": 24, "Seleciona a(s) Pendência(s)": "Em análise", "Vendedor": "VENDEDOR 3"}, {"Nome do Cliente:": "TESTE8", "Produto - Lead": "CELULAR", "Envio da Proposta": "14/10/2026", "Modelo": "INDICACAO", "N° Proposta": 25, "Seleciona a(s) Pendência(s)": "Em análise", "Vendedor": "VENDEDOR 1"}, {"Nome do Cliente:": "TESTE3", "Produto - Lead": "AUTOMOVEL", "Envio da Proposta": "15/10/2026", "Modelo": "INDICACAO", "N° Proposta": 26, "Seleciona a(s) Pendência(s)": "Em análise", "Vendedor": "VENDEDOR 2"}, {"Nome do Cliente:": "TESTE0", "Produto - Lead": "AUTOMOVEL", "Envio da Proposta": "14/10/2026", "Modelo": "INDICACAO", "N° Proposta": 27, "Seleciona a(s) Pendência(s)": "Vistoria Reprovada ou Pendente", "Vendedor": "VENDEDOR 3"}, {"Nome do Cliente:": "TESTE4", "Produto - Lead": "MOTO", "Envio da Proposta": "06/10/2026", "Modelo": "LEAD", "N° Proposta": 28, "Seleciona a(s) Pendência(s)": "Instalação Rastreador", "Vendedor": "VENDEDOR 1"}, {"Nome do Cliente:": "TESTE1", "Produto - Lead": "RESIDENCIAL", "Envio da Proposta": "14/10/2026", "Modelo": "RENOVACAO", "N° Proposta": 29, "Seleciona a(s) Pendência(s)": "Pagamento Pendente", "Vendedor": "VENDEDOR 2"}, {"Nome do Cliente:": "TESTE1", "Produto - Lead": "BIKE", "Envio da Proposta": "14/10/2026", "Modelo": "RENOVACAO", "N° Proposta": 30, "Seleciona a(s) Pendência(s)": "Pagamento Pendente", "Vendedor": "VENDEDOR 3"}, {"Nome do Cliente:": "TESTE8", "Produto - Lead": "CELULAR", "Envio da Proposta": "16/10/2026", "Modelo": "INDICACAO", "N° Proposta": 31, "Seleciona a(s) Pendência(s)": "Em análise", "Vendedor": "VENDEDOR 1"}, {"Nome do Cliente:": "TESTE1", "Produto - Lead": "MOTO", "Envio da Proposta": "16/10/2026", "Modelo": "LEAD", "N° Proposta": 32, "Seleciona a(s) Pendência(s)": "Existe Outra Proposta Pendente", "Vendedor": "VENDEDOR 2"}];
 const $ = s => document.querySelector(s);
@@ -20,7 +20,8 @@ const ALIAS = {
   vendedor:['vendedor','consultor'],
   seguradora:['seguradora'],
   susep:['susep','codigosusep','nsusep'],
-  empresa:['empresa','empresas','corretora']
+  empresa:['empresa','empresas','corretora'],
+  etiquetas:['etiquetas','etiqueta','tags','tag']
 };
 const titleCase = s => (s===s.toUpperCase()||s===s.toLowerCase()) ? s.toLowerCase().replace(/(^|[\s\/-])\S/g,m=>m.toUpperCase()) : s;
 /* Mapeamento SUSEP fixo, aplicado automaticamente na importação. */
@@ -37,7 +38,8 @@ const DIMS = [
   {k:'indicacao', label:'Tipo de indicação', optional:true},
   {k:'eficiencia', label:'Prioridade de eficiência'},
   {k:'seguradora', label:'Seguradora', optional:true},
-  {k:'origem', label:'Origem da venda', optional:true}
+  {k:'origem', label:'Origem da venda', optional:true},
+  {k:'tratamento', label:'Tratamento'}
 ];
 const HAS = {seguradora:false, susep:false, origem:false, indicacao:false};
 const KNOWN = ['Em análise','Vistoria Reprovada ou Pendente','Pagamento Pendente','Restrições Cadastrais ou Financeiras','Instalação Rastreador','Existe Outra Proposta Pendente'];
@@ -71,7 +73,7 @@ function buildEnt(){
 }
 
 let FILES = [], DATA = [];
-const sel = {indicacao:new Set(),eficiencia:new Set(),vendedor:new Set(),produto:new Set(),modelo:new Set(),seguradora:new Set(),susep:new Set(),origem:new Set(),empresa:new Set(),pend:new Set()};
+const sel = {tratamento:new Set(),indicacao:new Set(),eficiencia:new Set(),vendedor:new Set(),produto:new Set(),modelo:new Set(),seguradora:new Set(),susep:new Set(),origem:new Set(),empresa:new Set(),pend:new Set()};
 let query = '', sort = {k:'dias', dir:-1};
 
 /* ---------- leitura da planilha ---------- */
@@ -104,6 +106,8 @@ function toRows(json){
     const pend = txt(r[map.pend]).split(/[;\n|]+/).map(s=>s.trim()).filter(Boolean);
     return {
       cliente: txt(r[map.cliente]) || '—',
+      etiqueta: hasTreatmentLabel(map.etiquetas?r[map.etiquetas]:'')?'EM TRATAMENTO':'',
+      tratamento: hasTreatmentLabel(map.etiquetas?r[map.etiquetas]:'')?'EM TRATAMENTO':'A TRATAR',
       produto: effectiveProduct(r[map.produto],map.secundaria?r[map.secundaria]:''),
       envio: parseDate(r[map.envio]),
       modelo: txt(r[map.modelo]) || '—',
@@ -144,7 +148,7 @@ function rebuild(){
 }
 function persist(){
   try{
-    const real = FILES.filter(f=>!f.sample).map(f=>({empresa:f.empresa,label:f.label,time:f.time,json:f.json.map(r=>{const o={};for(const k in r){o[k]=r[k] instanceof Date? r[k].toISOString().slice(0,10):r[k]}return o;})}));
+    const real = FILES.filter(f=>!f.sample).map(f=>({empresa:f.empresa,label:f.label,time:f.time,source:f.source||'manual',owners:f.owners||[],json:f.json.map(r=>{const o={};for(const k in r){o[k]=r[k] instanceof Date? r[k].toISOString().slice(0,10):r[k]}return o;})}));
     storage.setItem('pend-files', JSON.stringify(real));
   }catch(e){}
 }
@@ -152,6 +156,7 @@ function clearFilters(){ Object.values(sel).forEach(s=>s.clear()); query=''; $('
 const fileEmps = f => [...new Set(rowsWithCompanies(f).map(r=>r.empresa))];
 function addFile(json, name, fallback){
   toRows(json); // valida antes de aceitar
+  if(typeof goalfyConnection!=='undefined'&&goalfyConnection)disconnectGoalfy('Consulta automática desconectada pela importação manual.');
   const empresa = (fallback || name.replace(/\.[^.]+$/,'').replace(/[_]+/g,' ')).trim() || 'Empresa';
   const nf = {empresa, label:name, time:Date.now(), json, sample:false};
   const emps = fileEmps(nf);
@@ -206,7 +211,7 @@ function match(r, skip){
   for(const d of DIMS){ if(d.k===skip) continue; const s=sel[d.k]; if(s.size && !s.has(r[d.k])) return false; }
   if(skip!=='empresa' && sel.empresa.size && !sel.empresa.has(r.empresa)) return false;
   if(skip!=='pend' && sel.pend.size && !r.pend.some(p=>sel.pend.has(p))) return false;
-  if(query){ const q=NORM(query); if(!NORM(r.cliente+r.proposta+r.vendedor+r.produto+r.indicacao+r.eficiencia+r.seguradora+r.susep+r.origem+r.empresa).includes(q)) return false; }
+  if(query){ const q=NORM(query); if(!NORM(r.cliente+r.proposta+r.vendedor+r.etiqueta+r.produto+r.indicacao+r.eficiencia+r.seguradora+r.susep+r.origem+r.empresa).includes(q)) return false; }
   return true;
 }
 const uniq = (rows,k) => [...new Set(rows.map(r=>r[k]))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
@@ -221,10 +226,10 @@ function renderReports(){
   real.forEach(f=>{
     const row = document.createElement('div'); row.className='rep';
     const emps = fileEmps(f), n = FILES.indexOf(f);
-    const nm = document.createElement('b'); nm.textContent=emps.join(' · ');nm.style.fontSize='14px';
+    const nm = document.createElement('b'); nm.textContent=emps.join(' · ')||'Sem propostas';nm.style.fontSize='14px';
     const info = document.createElement('span'); info.textContent = toRows(f.json).length+' propostas · '+(f.label||'arquivo')+' · '+hhmm(new Date(f.time));
     const rm = document.createElement('button'); rm.type='button'; rm.className='btn small'; rm.textContent='Remover';
-    rm.onclick = () => { FILES.splice(n,1); if(!FILES.length) FILES=[{empresa:'Exemplo',time:Date.now(),json:SAMPLE,sample:true}]; sel.empresa.clear(); rebuild(); persist(); render(); };
+    rm.onclick = () => { if(f.source==='goalfy'&&typeof disconnectGoalfy==='function')disconnectGoalfy(); FILES.splice(n,1); if(!FILES.length) FILES=[{empresa:'Exemplo',time:Date.now(),json:SAMPLE,sample:true}]; sel.empresa.clear(); rebuild(); persist(); render(); };
     row.append(nm, info, rm); el.appendChild(row);
   });
 }
@@ -243,7 +248,7 @@ function renderFilters(){
     const chips = document.createElement('div'); chips.className='chips'; chips.setAttribute('role','group'); chips.setAttribute('aria-label',d.label);
     const all = document.createElement('button'); all.type='button'; all.className='chip'; all.textContent='TODOS'; all.setAttribute('aria-pressed', sel[d.k].size===0);
     all.onclick=()=>{sel[d.k].clear();render()}; chips.appendChild(all);
-    const values=d.k==='eficiencia'?['Demais pendências','Impactam eficiência']:uniq(DATA.filter(r=>!sel.empresa.size || sel.empresa.has(r.empresa)),d.k);
+    const values=d.k==='eficiencia'?['Demais pendências','Impactam eficiência']:d.k==='tratamento'?['A TRATAR','EM TRATAMENTO']:uniq(DATA.filter(r=>!sel.empresa.size || sel.empresa.has(r.empresa)),d.k);
     values.forEach(v=>{
       const b=document.createElement('button'); b.type='button'; b.className='chip'; b.textContent=String(v).toLocaleUpperCase('pt-BR'); b.setAttribute('aria-pressed', sel[d.k].has(v));
       b.onclick=()=>toggle(sel[d.k],v); chips.appendChild(b);
@@ -364,8 +369,8 @@ function stacked(title, sub, key, rows, o){
 }
 function aging(rows){
   const box = panel('Tempo parado desde o envio','Quantas propostas estão em cada faixa de dias desde o envio.');
-  const B = [['0 a 3 dias',0,3],['4 a 7 dias',4,7],['8 a 14 dias',8,14],['15+ dias',15,1e9]];
-  const c = B.map(b=>rows.filter(r=>r.dias!=null && r.dias>=b[1] && r.dias<=b[2]).length);
+  const B = AGING_BANDS;
+  const c = agingCounts(rows);
   const max = Math.max(1,...c);
   const cols = document.createElement('div'); cols.className='cols';
   const lab = document.createElement('div'); lab.className='collab';
@@ -375,7 +380,7 @@ function aging(rows){
     bindTip(col, '<b>'+b[0]+'</b><br>'+c[i]+' proposta(s)');
     cols.appendChild(col); lab.insertAdjacentHTML('beforeend','<span>'+b[0]+'</span>');
   });
-  box.append(cols, lab, legendRow([['Até 14 dias','var(--s1)'],['15 dias ou mais (atenção)','var(--crit)']]));
+  box.append(cols, lab, legendRow([['Até 9 dias','var(--s1)'],['10+ dias (atenção)','var(--crit)']]));
   return box;
 }
 function perDay(rows){
@@ -424,6 +429,7 @@ function renderTable(rows){
   if(HAS.susep){ cols.push(['susep','SUSEP']); cols.push(['origem','Origem da venda']); }
   cols.push(['vendedor','Vendedor']);
   if(multi) cols.push(['empresa','Empresa']);
+  cols.push(['etiqueta','Etiquetas']);
   const order=orderedKeys(columnOrder,cols.map(c=>c[0]));cols.sort((a,b)=>order.indexOf(a[0])-order.indexOf(b[0]));
   const val = (r,k) => k==='pend' ? r.pend.join(', ') : k==='envio' ? (r.envio?r.envio.getTime():0) : (r[k]==null?-1:r[k]);
   const sorted = [...rows].sort((a,b)=>{
@@ -436,13 +442,14 @@ function renderTable(rows){
   t.innerHTML = '<thead><tr>'+cols.map(c=>'<th class="'+(c[2]||'')+'" data-k="'+c[0]+'"><button type="button" class="column-grip" draggable="true" aria-label="Mover coluna '+esc(c[1])+'" title="Arrastar ou Alt + setas para mover">⠿</button><button type="button" class="column-sort">'+c[1]+(sort.k===c[0]?(sort.dir>0?' ▲':' ▼'):'')+'</button></th>').join('')+'</tr></thead>';
   const tb = document.createElement('tbody');
   sorted.forEach(r=>{
-    const d = r.dias, cls = d==null?'ok':d>=15?'late':d>=8?'mid':'ok', mark = d==null?'':d>=15?'▲ ':d>=8?'● ':'';
+    const d = r.dias, cls = d==null?'ok':d>=AGING_LIMIT?'late':d>=8?'mid':'ok', mark = d==null?'':d>=AGING_LIMIT?'▲ ':d>=8?'● ':'';
     const tr = document.createElement('tr');
     tr.innerHTML = cols.map(c=>{
       switch(c[0]){
         case 'proposta': return '<td class="num">'+esc(r.proposta)+'</td>';
         case 'envio': return '<td>'+fmtDate(r.envio)+'</td>';
         case 'dias': return '<td class="num"><span class="pill '+cls+'">'+mark+(d==null?'—':d+' d')+'</span></td>';
+        case 'etiqueta': return '<td>'+(r.etiqueta?'<span class="treatment-tag">EM TRATAMENTO</span>':'')+'</td>';
         case 'pend': return '<td>'+r.pend.map(p=>'<span class="dot"><i style="background:'+colorOf(p)+'"></i>'+esc(p)+'</span>').join('')+'</td>';
         default: return '<td>'+esc(r[c[0]])+'</td>';
       }
@@ -469,7 +476,7 @@ function generalWorkbook(){
   if(!cols.some(c=>c[0]==='empresa'))cols.push(['empresa','Empresa']);
   const data = [cols.map(c=>c[1]), ...rows.map(r=>cols.map(([k])=>k==='envio'?(r.envio||null):k==='pend'?r.pend.join(', '):(r[k]==null?null:r[k])))];
   const sheet = XLSX.utils.aoa_to_sheet(data, {cellDates:true, dateNF:'dd/mm/yyyy'});
-  sheet['!cols'] = cols.map(([k])=>({wch:({empresa:20,cliente:35,produto:22,modelo:20,proposta:20,envio:14,dias:14,pend:55,vendedor:28,seguradora:24,susep:20,origem:22,indicacao:30,eficiencia:28})[k]||20}));
+  sheet['!cols'] = cols.map(([k])=>({wch:({empresa:20,cliente:35,produto:22,modelo:20,proposta:20,envio:14,dias:14,pend:55,vendedor:28,seguradora:24,susep:20,origem:22,indicacao:30,eficiencia:28,etiqueta:22})[k]||20}));
   sheet['!autofilter'] = {ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:data.length-1,c:cols.length-1}})};
   const book = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(book, sheet, 'Pendências');
@@ -506,7 +513,7 @@ function render(keepFilters){
   const ds = rows.filter(r=>r.dias!=null).map(r=>r.dias);
   const avg = ds.length ? Math.round(ds.reduce((a,b)=>a+b,0)/ds.length) : null;
   const old = rows.filter(r=>r.dias!=null).sort((a,b)=>b.dias-a.dias)[0];
-  const late = rows.filter(r=>r.dias!=null && r.dias>=10).length;
+  const late = rows.filter(r=>r.dias!=null && r.dias>=AGING_LIMIT).length;
   const cnt = k => Object.entries(rows.reduce((o,r)=>(o[r[k]]=(o[r[k]]||0)+1,o),{})).sort((a,b)=>b[1]-a[1])[0];
   const topV = cnt('vendedor');
   const priority=rows.filter(r=>r.eficiencia==='Impactam eficiência').length;
@@ -548,6 +555,21 @@ function render(keepFilters){
 let editingLayout=false, draggingChart=null, savedLayout=cleanLayout(null), draftLayout;
 try{savedLayout=cleanLayout(JSON.parse(storage.getItem('pend-sections-layout')||storage.getItem('pend-chart-layout')||'null'));if(!savedLayout.order.length){savedLayout=cleanLayout({...savedLayout,order:JSON.parse(storage.getItem('pend-chart-order')||'[]')});}}catch(e){savedLayout=cleanLayout(null);}
 draftLayout=cleanLayout(savedLayout);
+let collapsedSections=new Set();
+try{const value=JSON.parse(storage.getItem('pend-collapsed-sections')||'[]');if(Array.isArray(value))collapsedSections=new Set(value.filter(id=>DEFAULT_SECTIONS.some(s=>s.id===id)));}catch(e){}
+function applySectionCollapse(wrapper){
+  const id=wrapper.dataset.sectionId,section=activeLayout().sections.find(s=>s.id===id),collapsed=!editingLayout&&collapsedSections.has(id);
+  const button=wrapper.querySelector('.section-toggle');button.disabled=editingLayout;button.setAttribute('aria-expanded',!collapsed);
+  button.setAttribute('aria-label',(collapsed?'Expandir seção ':'Recolher seção ')+section.name);
+  wrapper.querySelector('.section-body').hidden=collapsed;
+}
+function setSectionCollapsed(id,collapsed){
+  if(!DEFAULT_SECTIONS.some(s=>s.id===id))return;
+  if(collapsed)collapsedSections.add(id);else collapsedSections.delete(id);
+  try{storage.setItem('pend-collapsed-sections',JSON.stringify([...collapsedSections]));}catch(e){$('#layout-status').textContent='Visualização aplicada nesta sessão; não foi possível salvar as seções recolhidas.';}
+  const wrapper=document.getElementById('section-'+id);if(wrapper)applySectionCollapse(wrapper);
+  if(collapsed&&$('#section-nav').value==='section-'+id)$('#section-nav').value='';
+}
 const chartCards=()=>[...$('#charts').querySelectorAll('.ch')];
 const activeLayout=()=>editingLayout?draftLayout:savedLayout;
 const chartSection=(id,layout=activeLayout())=>layout.placements[id]||defaultSection(id);
@@ -560,7 +582,7 @@ function updateSectionNavigation(){
   });
   nav.value=[...nav.options].some(o=>o.value===previous)?previous:'';
 }
-$('#section-nav').onchange=e=>{if(e.target.value)document.getElementById(e.target.value)?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});};
+$('#section-nav').onchange=e=>{const wrapper=document.getElementById(e.target.value);if(!wrapper)return;setSectionCollapsed(wrapper.dataset.sectionId,false);wrapper.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});};
 function moveChart(id,targetId){
   if(!editingLayout||id===targetId)return;
   const cards=chartCards(),keys=cards.map(c=>c.dataset.chartId);
@@ -584,16 +606,17 @@ function applyChartLayout(){
   // Detach cards before clearing section wrappers; do not recreate chart/filter state.
   cards.forEach(card=>card.remove());root.innerHTML='';
   layout.sections.forEach(section=>{
-    const wrapper=document.createElement('section');wrapper.id='section-'+section.id;wrapper.className='chart-section'+(editingLayout?' editing':'');
+    const wrapper=document.createElement('section');wrapper.id='section-'+section.id;wrapper.className='chart-section'+(editingLayout?' editing':'');wrapper.dataset.sectionId=section.id;
     const heading=document.createElement('div');heading.className='section-heading';
+    const toggle=document.createElement('button');toggle.type='button';toggle.className='section-toggle';toggle.setAttribute('aria-controls','section-content-'+section.id);toggle.innerHTML='<span class="section-chevron" aria-hidden="true">›</span>';toggle.onclick=()=>setSectionCollapsed(section.id,!collapsedSections.has(section.id));heading.appendChild(toggle);
     const title=document.createElement('h2');title.textContent=section.name;heading.appendChild(title);
     if(editingLayout){
       const name=document.createElement('input');name.className='section-name';name.value=section.name;name.maxLength=60;name.setAttribute('aria-label','Nome da seção '+section.name);
-      name.oninput=()=>{section.name=name.value.trim().slice(0,60)||DEFAULT_SECTIONS.find(s=>s.id===section.id).name;title.textContent=section.name;updateSectionNavigation();};
+      name.oninput=()=>{section.name=name.value.trim().slice(0,60)||DEFAULT_SECTIONS.find(s=>s.id===section.id).name;title.textContent=section.name;applySectionCollapse(wrapper);updateSectionNavigation();};
       heading.appendChild(name);
     }
-    const intro=document.createElement('div');intro.appendChild(heading);
-    const description=document.createElement('p');description.className='section-description';description.textContent=section.description;intro.appendChild(description);
+    const content=document.createElement('div');content.className='section-body';content.id='section-content-'+section.id;
+    const description=document.createElement('p');description.className='section-description';description.textContent=section.description;content.appendChild(description);
     const grid=document.createElement('div');grid.className='grid2';grid.dataset.sectionId=section.id;
     const assigned=cards.filter(c=>chartSection(c.dataset.chartId,layout)===section.id),visible=assigned.filter(c=>!layout.hidden.includes(c.dataset.chartId));
     wrapper.hidden=!editingLayout&&!visible.length;
@@ -617,7 +640,7 @@ function applyChartLayout(){
       }
       grid.appendChild(card);
     });
-    wrapper.append(intro,grid);root.appendChild(wrapper);
+    content.appendChild(grid);wrapper.append(heading,content);root.appendChild(wrapper);applySectionCollapse(wrapper);
   });
   const restore=$('#hidden-charts');restore.innerHTML='';restore.hidden=!editingLayout||!layout.hidden.length;
   if(editingLayout){layout.hidden.forEach(id=>{const card=cards.find(c=>c.dataset.chartId===id);if(!card)return;const button=document.createElement('button');button.type='button';button.className='btn small';button.textContent='Restaurar: '+card.querySelector('h2').textContent;button.onclick=()=>{draftLayout.hidden=draftLayout.hidden.filter(k=>k!==id);applyChartLayout();};restore.appendChild(button);});}
@@ -637,11 +660,13 @@ $('#theme').onclick=()=>{const theme=currentTheme()==='dark'?'light':'dark';docu
 updateThemeButton();
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',updateThemeButton);
 
+$('#back-to-top').onclick=()=>window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+
 /* ---------- início ---------- */
 (function init(){
   try{
     const s = JSON.parse(storage.getItem('pend-files')||'null');
-    if(s && s.length) FILES = s.map(f=>({empresa:f.empresa,label:f.label,time:f.time,json:f.json,sample:false}));
+    if(s && s.length) FILES = s.map(f=>({empresa:f.empresa,label:f.label,time:f.time,source:f.source||'manual',owners:f.owners||[],json:f.json,sample:false}));
   }catch(e){}
   if(!FILES.length) FILES = [{empresa:'Exemplo',time:Date.now(),json:SAMPLE,sample:true}];
   rebuild(); render();
