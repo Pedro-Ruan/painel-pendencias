@@ -1,5 +1,17 @@
 # Integração Goalfy com múltiplos relatórios
 
+## Diagnóstico R4
+
+Após publicar o Worker R4, abra /diagnostico no endereço do serviço. A página pede DASHBOARD_TOKEN e a posição do relatório na lista GOALFY_REPORTS. Se a lista estiver reduzida a um único relatório para teste, sua posição será 1. Cada execução faz duas consultas GET ao relatório escolhido, com os cabeçalhos atuais e com Accept/User-Agent comuns de navegador. Essa comparação é uma hipótese de diagnóstico, não reproduz todos os aspectos de um navegador real.
+
+O resultado contém somente status, categoria de formato, assinatura ZIP, duração e etapas sem endereços. Não devolve conteúdo da resposta, chaves, identificadores ou cabeçalhos externos. O diagnóstico não atualiza o painel. Requer senha e origem autorizada; o formulário não guarda a senha. Compartilhe somente o JSON do resultado, nunca os cabeçalhos de autorização. Use manualmente para investigação, não como consulta periódica.
+
+## Correção do download
+
+O Worker acompanha até cinco redirecionamentos HTTPS por relatório, validando o destino e sem copiar credenciais para o armazenamento. Se o download usar outro provedor além dos domínios de Goalfy e dos provedores já previstos no código, configure GOALFY_DOWNLOAD_HOSTS com os nomes exatos de hosts autorizados, separados por vírgula, somente após verificar o destino. Não use curingas nem URLs completas. Essa variável opcional também fica no Cloudflare, fora do código público.
+
+Erros indicam qual relatório falhou e distinguem tempo limite, HTTP recusado, conexão e destino bloqueado, sem expor links ou chaves. Uma falha continua impedindo a substituição parcial dos dados.
+
 ## Cloudflare
 
 1. Abra seu Worker, clique em Edit code, substitua o código por worker.mjs e publique.
