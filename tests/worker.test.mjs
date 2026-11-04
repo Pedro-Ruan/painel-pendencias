@@ -5,6 +5,19 @@ const env={ALLOWED_ORIGIN:'https://dashboard.example',GOALFY_API_KEY:'FAKE_API_K
 function request(token=env.DASHBOARD_TOKEN,origin=env.ALLOWED_ORIGIN,method='GET',path='/report'){
   return new Request('https://example.workers.dev'+path,{method,headers:{Origin:origin,Authorization:'Bearer '+token}});
 }
+test('somente erros controlados podem fornecer mensagem pública do download',async()=>{
+  const original=globalThis.fetch;
+  try{globalThis.fetch=async()=>{throw Object.assign(new Error('private upstream detail'),{safeMessage:env.GOALFY_API_KEY});};const response=await worker.fetch(request(),env),body=await response.text();assert.equal(response.status,502);assert(!body.includes(env.GOALFY_API_KEY));assert(!body.includes('private upstream detail'));assert.match(body,/Falha de conexão/);}finally{globalThis.fetch=original;}
+});
+test('Anexar Apólices usa Secret separado, sem fallback para Pendências',async()=>{
+  const original=globalThis.fetch,seen=[];const config={...env,GOALFY_APOLICES_REPORTS:JSON.stringify([{url:'https://api.goalfy.com.br/api/reports/createExcelDownload/fixture-apolices/external?apiKey=FAKE_APOLICES'}])};
+  try{globalThis.fetch=async url=>{seen.push(new URL(url).pathname);return new Response(new Uint8Array([80,75,3,4]));};
+    assert.equal((await worker.fetch(request(undefined,undefined,'GET','/report?dataset=apolices'),config)).status,200);assert.match(seen[0],/fixture-apolices/);
+    assert.equal((await worker.fetch(request(),config)).status,200);assert.match(seen[1],/fixture-a/);
+    assert.equal((await worker.fetch(request(undefined,undefined,'GET','/report?dataset=apolices'),env)).status,503);
+    assert.equal((await worker.fetch(request(undefined,undefined,'GET','/report?dataset=invalid'),config)).status,400);assert.equal(seen.length,2);
+  }finally{globalThis.fetch=original;}
+});
 test('diagnóstico compara cabeçalhos e não devolve corpo, URL ou credenciais do Goalfy',async()=>{
   const original=globalThis.fetch,seen=[];
   try{
@@ -25,9 +38,9 @@ test('diagnóstico público só apresenta formulário, sem relatório; exceçõe
 });
 test('versão pública permite conferir implantação sem expor configuração',async()=>{
   const response=await worker.fetch(new Request('https://example.workers.dev/'),env),body=await response.text();
-  assert.match(body,/GOALFY-WORKER-20261030-R4/);assert.equal(response.headers.get('Cache-Control'),'no-store');assert.equal(response.headers.get('X-Worker-Version'),'GOALFY-WORKER-20261030-R4');
+  assert.match(body,/GOALFY-WORKER-20261103-R5/);assert.equal(response.headers.get('Cache-Control'),'no-store');assert.equal(response.headers.get('X-Worker-Version'),'GOALFY-WORKER-20261103-R5');
   for(const secret of [env.DASHBOARD_TOKEN,env.GOALFY_API_KEY,env.GOALFY_REPORTS,env.ALLOWED_ORIGIN])assert(!body.includes(secret));
-  const denied=await worker.fetch(request('invalid'),env);assert.equal((await denied.json()).version,'GOALFY-WORKER-20261030-R4');
+  const denied=await worker.fetch(request('invalid'),env);assert.equal((await denied.json()).version,'GOALFY-WORKER-20261103-R5');
 });
 test('regressão: segue download redirecionado sem encaminhar credenciais',async()=>{
   const original=globalThis.fetch,seen=[];
@@ -85,3 +98,5 @@ test('Worker: dois relatórios e chaves distintas, sem publicar links; falha par
     assert.equal((await worker.fetch(request(undefined,'null'),config)).status,403);
   }finally{globalThis.fetch=original;}
 });
+
+

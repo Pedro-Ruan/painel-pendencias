@@ -1,10 +1,13 @@
 // Cole este arquivo em Edit code no Cloudflare Worker. As chaves ficam em Secrets.
 // Report URLs and their keys are configured only in the private GOALFY_REPORTS Secret.
 const MAX_BYTES=20*1024*1024;
-const WORKER_VERSION='GOALFY-WORKER-20261030-R4';
-const DIAGNOSTIC_PAGE=`<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Diagnóstico Goalfy</title><body><h1>Diagnóstico Goalfy R4</h1><p>Executa duas consultas ao relatório selecionado, sem alterar o dashboard. Informe a senha DASHBOARD_TOKEN, não a chave do Goalfy.</p><form><label>Senha <input id="token" type="password" required autocomplete="off"></label><label>Posição do relatório no Secret <input id="number" type="number" min="1" max="5" value="1" required></label><button>Executar diagnóstico</button></form><pre role="status" id="result"></pre><script>document.querySelector('form').onsubmit=async e=>{e.preventDefault();const button=document.querySelector('button'),input=document.querySelector('#token'),token=input.value;input.value='';button.disabled=true;document.querySelector('#result').textContent='Consultando…';try{const response=await fetch('/diagnostic?report='+encodeURIComponent(document.querySelector('#number').value),{method:'POST',headers:{Authorization:'Bearer '+token},cache:'no-store',credentials:'omit'});document.querySelector('#result').textContent=JSON.stringify(await response.json(),null,2);}catch(e){document.querySelector('#result').textContent='Falha ao acessar o diagnóstico.';}finally{button.disabled=false;}};</script></body></html>`;
+const WORKER_VERSION='GOALFY-WORKER-20261103-R5';
+const DIAGNOSTIC_PAGE=`<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Diagnóstico Goalfy</title><body><h1>Diagnóstico Goalfy R5</h1><p>Executa duas consultas ao relatório selecionado, sem alterar o dashboard. Informe a senha DASHBOARD_TOKEN, não a chave do Goalfy.</p><form><label>Senha <input id="token" type="password" required autocomplete="off"></label><label>Posição do relatório no Secret <input id="number" type="number" min="1" max="5" value="1" required></label><button>Executar diagnóstico</button></form><pre role="status" id="result"></pre><script>document.querySelector('form').onsubmit=async e=>{e.preventDefault();const button=document.querySelector('button'),input=document.querySelector('#token'),token=input.value;input.value='';button.disabled=true;document.querySelector('#result').textContent='Consultando…';try{const response=await fetch('/diagnostic?report='+encodeURIComponent(document.querySelector('#number').value),{method:'POST',headers:{Authorization:'Bearer '+token},cache:'no-store',credentials:'omit'});document.querySelector('#result').textContent=JSON.stringify(await response.json(),null,2);}catch(e){document.querySelector('#result').textContent='Falha ao acessar o diagnóstico.';}finally{button.disabled=false;}};</script></body></html>`;
 const REDIRECTS=new Set([301,302,303,307,308]);
-function downloadError(message){const error=new Error(message);error.safeMessage=message;return error;}
+class DownloadError extends Error {
+  constructor(message){super(message);this.name='DownloadError';}
+}
+function downloadError(message){return new DownloadError(message);}
 async function downloadReport(endpoint,signal,extraHosts=[],profile='atual',trace=[]){
   let current=new URL(endpoint);
   const secret=endpoint.searchParams.get('apiKey');
@@ -41,18 +44,21 @@ export default {
     const fail=(message,status)=>new Response(JSON.stringify({error:message,version:WORKER_VERSION}),{status,headers:{...headers,'Content-Type':'application/json;charset=utf-8'}});
     if(request.method==='OPTIONS')return new Response(null,{status:204,headers:{...headers,'Access-Control-Allow-Methods':'GET,POST,OPTIONS','Access-Control-Allow-Headers':'Authorization','Access-Control-Max-Age':'600'}});
     if(!((url.pathname==='/report'&&request.method==='GET')||(url.pathname==='/diagnostic'&&request.method==='POST')))return fail('Endereço não encontrado.',404);
-    if(!env.GOALFY_REPORTS||!env.DASHBOARD_TOKEN||env.DASHBOARD_TOKEN.length<24)return fail('Configure GOALFY_REPORTS e DASHBOARD_TOKEN nos Secrets do Worker.',503);
+    const dataset=url.searchParams.get('dataset')||'pendencias';
+    if(!['pendencias','apolices'].includes(dataset))return fail('Conjunto de relatórios inválido.',400);
+    const secretName=dataset==='apolices'?'GOALFY_APOLICES_REPORTS':'GOALFY_REPORTS';
+    if(!env[secretName]||!env.DASHBOARD_TOKEN||env.DASHBOARD_TOKEN.length<24)return fail('Configure '+secretName+' e DASHBOARD_TOKEN nos Secrets do Worker.',503);
     if(!(await validToken(request,env.DASHBOARD_TOKEN)))return fail('Senha de acesso inválida.',401);
     let reports;
     try{
-      reports=JSON.parse(env.GOALFY_REPORTS);
+      reports=JSON.parse(env[secretName]);
       if(!Array.isArray(reports)||reports.length<1||reports.length>5)throw new Error();
       reports=reports.map(report=>{
         const endpoint=new URL(report.url);
         if(endpoint.protocol!=='https:'||endpoint.hostname!=='api.goalfy.com.br'||endpoint.port||endpoint.username||endpoint.password||endpoint.hash||!/^\/api\/reports\/createExcelDownload\/[a-zA-Z0-9-]+\/external$/.test(endpoint.pathname)||!endpoint.searchParams.get('apiKey')||[...endpoint.searchParams.keys()].some(key=>key!=='apiKey'))throw new Error();
         return endpoint;
       });
-    }catch(e){return fail('Configure GOALFY_REPORTS com uma lista válida de relatórios.',503);}
+    }catch(e){return fail('Configure '+secretName+' com uma lista válida de relatórios.',503);}
     if(url.pathname==='/diagnostic'){
       const number=Number(url.searchParams.get('report'));
       if(!Number.isInteger(number)||number<1||number>reports.length)return fail('Escolha uma posição existente na lista GOALFY_REPORTS.',400);
@@ -65,7 +71,7 @@ export default {
           while(reader&&prefix.length<512){const chunk=await reader.read();if(chunk.done)break;const next=new Uint8Array(Math.min(512,prefix.length+chunk.value.length));next.set(prefix);next.set(chunk.value.subarray(0,next.length-prefix.length),prefix.length);prefix=next;}
           const content=(upstream.headers.get('Content-Type')||'').toLowerCase();
           results.push({perfil:profile,status:upstream.status,formato:content.includes('json')?'JSON':content.includes('html')?'HTML':content.includes('spreadsheet')?'Excel':'outro',assinaturaZIP:prefix[0]===80&&prefix[1]===75,etapas:trace,duracaoMs:Date.now()-started});
-        }catch(e){results.push({perfil:profile,erro:e.safeMessage||(e.name==='TimeoutError'||e.name==='AbortError'?'tempo limite':'falha de conexão'),etapas:trace,duracaoMs:Date.now()-started});}
+        }catch(e){results.push({perfil:profile,erro:e instanceof DownloadError?e.message:(e.name==='TimeoutError'||e.name==='AbortError'?'tempo limite':'falha de conexão'),etapas:trace,duracaoMs:Date.now()-started});}
         finally{try{await reader?.cancel();}catch(e){}}
       }
       return new Response(JSON.stringify({version:WORKER_VERSION,relatorio:number,comparacao:results}),{headers:{...headers,'Content-Type':'application/json;charset=utf-8'}});
@@ -90,6 +96,6 @@ export default {
       results.push({data:btoa(binary)});
       }
       return new Response(JSON.stringify({reports:results}),{headers:{...headers,'Content-Type':'application/json;charset=utf-8','X-Goalfy-Fetched-At':new Date().toISOString()}});
-    }catch(e){const reason=e.safeMessage||(e.name==='TimeoutError'||e.name==='AbortError'?'A consulta excedeu o tempo limite.':'Falha de conexão entre o Worker e o Goalfy.');return fail('Relatório '+reportNumber+': '+reason,502);}
+    }catch(e){const reason=e instanceof DownloadError?e.message:(e.name==='TimeoutError'||e.name==='AbortError'?'A consulta excedeu o tempo limite.':'Falha de conexão entre o Worker e o Goalfy.');return fail('Relatório '+reportNumber+': '+reason,502);}
   }
 };

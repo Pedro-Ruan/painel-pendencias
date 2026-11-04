@@ -3,6 +3,7 @@
 !/.gitignore
 !/.nojekyll
 !/index.html
+!/apolices.html
 !/README.md
 !/AGENTS.md
 !/package.json
@@ -10,6 +11,7 @@
 !/assets/
 !/assets/*.js
 !/assets/styles.css
+!/assets/apolices.css
 !/assets/LICENSE-SHEETJS.txt
 !/tests/
 !/tests/*.cjs
@@ -23,3 +25,4 @@
 !/integracao/
 !/integracao/worker.mjs
 !/integracao/CONFIGURAR.md
+!/integracao/APOLICES.md

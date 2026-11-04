@@ -42,7 +42,8 @@
       return {...item,name:typeof saved?.name==='string'&&saved.name.trim()?saved.name.trim().slice(0,60):item.name};
     }),placements:Object.fromEntries(Object.entries(source.placements||{}).filter(([key,id])=>typeof key==='string'&&sections.some(s=>s.id===id)))};
   }
-  const api={hasTreatmentLabel,AGING_LIMIT,AGING_BANDS,agingCounts,norm,effectiveProduct,normalizeInsurer,referralType,isThirdParty,efficiencyPriority,orderedKeys,moveKey,sections,defaultSection,cleanLayout};
+  const companyBySusep={'CMHE2J':'INRI','2GAJ6J':'INRI','CMN32J':'ICX','A805TJ':'ICX'};
+  const api={companyBySusep,hasTreatmentLabel,AGING_LIMIT,AGING_BANDS,agingCounts,norm,effectiveProduct,normalizeInsurer,referralType,isThirdParty,efficiencyPriority,orderedKeys,moveKey,sections,defaultSection,cleanLayout};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
   else root.PendenciasCore=api;
 })(typeof window!=='undefined'?window:globalThis);

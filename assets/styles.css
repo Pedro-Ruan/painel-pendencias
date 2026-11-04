@@ -37,6 +37,8 @@ button,input{font:inherit;color:inherit}
 .btn:hover{background:var(--hover)}
 .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
 .btn.primary:hover{filter:brightness(1.08)}
+a.btn,a.btn:visited{display:inline-block;text-decoration:none;color:var(--ink)}
+a.btn.primary,a.btn.primary:visited{color:var(--accent-ink)}
 .btn.small{padding:6px 10px;font-weight:500}
 
 .drop{border:1.5px dashed var(--axis);border-radius:10px;padding:12px 16px;color:var(--ink2);font-size:13px;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;background:var(--surface)}

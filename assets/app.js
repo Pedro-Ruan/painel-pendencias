@@ -25,7 +25,7 @@ const ALIAS = {
 };
 const titleCase = s => (s===s.toUpperCase()||s===s.toLowerCase()) ? s.toLowerCase().replace(/(^|[\s\/-])\S/g,m=>m.toUpperCase()) : s;
 /* Mapeamento SUSEP fixo, aplicado automaticamente na importação. */
-const SUSEP_EMPRESA = {'CMHE2J':'INRI','2GAJ6J':'INRI','CMN32J':'ICX','A805TJ':'ICX'};
+const SUSEP_EMPRESA = window.PendenciasCore.companyBySusep;
 const origemOf = s => {
   if(!s || s==='—') return s ? 'Sem SUSEP' : '';
   if(NORM(s).startsWith('terceiro')) return 'Terceiros';

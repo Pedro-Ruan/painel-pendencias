@@ -5,6 +5,7 @@ export const project=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 export async function build(source=project,destination=resolve(project,'dist')){
  await mkdir(destination,{recursive:true});
  await copyFile(resolve(source,'index.html'),resolve(destination,'index.html'));
+  try{await copyFile(resolve(source,'apolices.html'),resolve(destination,'apolices.html'));}catch(e){if(e.code!=='ENOENT')throw e;}
  try{await cp(resolve(source,'assets'),resolve(destination,'assets'),{recursive:true});}catch(e){if(e.code!=='ENOENT')throw e;}
  await copyFile(resolve(project,'.nojekyll'),resolve(destination,'.nojekyll'));
 }
