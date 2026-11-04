@@ -59,3 +59,5 @@ test('regressão: faixas do gráfico são exclusivas e destacam 10+ dias',()=>{
   assert.deepEqual(core.agingCounts(rows),[2,2,2,4]);assert.equal(core.AGING_LIMIT,10);
   assert.deepEqual(core.AGING_BANDS.map(b=>b[0]),['0 a 3 dias','4 a 7 dias','8 a 9 dias','10+ dias']);
 });
+
+test('CPF conserva zeros, permite coluna ausente e gera nome somente com onze dígitos',()=>{const C=require('../assets/core.js');assert.equal(C.cpfDigits('012.345.678-90'),'01234567890');assert.equal(C.cpfDigits(1234567890),'01234567890');assert.equal(C.cpfDigits('1234'),'');assert.equal(C.policyLabel('', 'VIDA','Exemplo'),'');assert.equal(C.policyLabel('01234567890','AUTO/MOTO','Cliente: exemplo'),'0123 - AUTO MOTO - Cliente exemplo');assert.deepEqual(C.cpfColumnOrder(['cliente','produto','envio'],['cliente','produto','cpf','envio']),['cliente','produto','cpf','envio']);assert.deepEqual(C.cpfColumnOrder(['cpf','cliente','produto'],['cliente','produto','cpf']),['cpf','cliente','produto']);});

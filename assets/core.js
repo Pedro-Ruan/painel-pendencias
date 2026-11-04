@@ -43,7 +43,10 @@
     }),placements:Object.fromEntries(Object.entries(source.placements||{}).filter(([key,id])=>typeof key==='string'&&sections.some(s=>s.id===id)))};
   }
   const companyBySusep={'CMHE2J':'INRI','2GAJ6J':'INRI','CMN32J':'ICX','A805TJ':'ICX'};
-  const api={companyBySusep,hasTreatmentLabel,AGING_LIMIT,AGING_BANDS,agingCounts,norm,effectiveProduct,normalizeInsurer,referralType,isThirdParty,efficiencyPriority,orderedKeys,moveKey,sections,defaultSection,cleanLayout};
+  function cpfDigits(value){if(value==null||value==='')return '';if(typeof value==='number'){if(!Number.isSafeInteger(value)||value<0)return '';return String(value).length<=11?String(value).padStart(11,'0'):'';}const text=String(value).trim();if(!/^[\d.\-\s]+$/.test(text))return '';const digits=text.replace(/\D/g,'');return digits.length===11?digits:'';}
+  function policyLabel(cpf,product,client){const digits=cpfDigits(cpf);if(!digits)return '';const cleanPart=value=>String(value??'').replace(/[<>:"/\\|?*\x00-\x1f]/g,' ').replace(/\s+/g,' ').trim();return [digits.slice(0,4),cleanPart(product),cleanPart(client)].filter(Boolean).join(' - ');}
+  function cpfColumnOrder(saved,available){const order=orderedKeys(saved,available);if(available.includes('cpf')&&(!Array.isArray(saved)||!saved.includes('cpf'))){order.splice(order.indexOf('cpf'),1);order.splice(order.indexOf('produto')+1,0,'cpf');}return order;}
+  const api={cpfDigits,policyLabel,cpfColumnOrder,companyBySusep,hasTreatmentLabel,AGING_LIMIT,AGING_BANDS,agingCounts,norm,effectiveProduct,normalizeInsurer,referralType,isThirdParty,efficiencyPriority,orderedKeys,moveKey,sections,defaultSection,cleanLayout};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
   else root.PendenciasCore=api;
 })(typeof window!=='undefined'?window:globalThis);

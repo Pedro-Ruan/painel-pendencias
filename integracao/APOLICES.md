@@ -36,3 +36,11 @@ Esta entrega é para revisão, sem publicação automática. Copie o pacote comp
 Clique nos valores dos gráficos para aplicar filtros combináveis; clique novamente para desfazer a seleção. Organizar gráficos abre uma edição: Salvar organização confirma e persiste, Cancelar restaura a ordem e os gráficos anteriores. Os botões de restauração individual aparecem para cada gráfico oculto. A confirmação de salvamento só aparece após gravação bem-sucedida no navegador.
 
 Colunas têm alças de arraste e também aceitam Alt + setas. A ordem é salva automaticamente, com confirmação, e acompanha a exportação XLSX. Dias parado é recalculado a partir do envio em dias corridos: 0–1 neutro, 2 amarelo e 3+ vermelho. O cartão Com mais de 2 dias conta somente 3+ dias nas linhas filtradas. Datas inválidas recebem — e ficam fora desse contador. O prazo de 10 dias em Pendências permanece separado.
+
+## CPF e salvamento da apólice
+
+A coluna CPF (ou CPF do Cliente) é opcional e aparece após Produto nos dois painéis. Relatórios antigos continuam compatíveis. CPFs são mantidos como texto com onze dígitos na exportação. Se a célula Excel vier numérica, é completada à esquerda até onze posições; prefira exportar CPF como texto para preservar sua representação. Não é feita validação de dígitos verificadores.
+
+Em Anexar Apólices, Salvar apólice mostra quatro primeiros dígitos do CPF, produto efetivo e nome do cliente, separados por hífen, e oferece Copiar. Caracteres incompatíveis com nomes de arquivo são substituídos por espaços. CPF ausente ou incompleto não gera senha; o botão fica desabilitado. Não há download nem alteração automática do PDF.
+
+A tabela usa área mais larga, quebra textos longos e oferece Ampliar tabela; Escape ou Reduzir tabela volta à visualização normal. Em telas menores a rolagem horizontal continua disponível para manter todas as colunas. O Worker não precisa ser alterado: inclua CPF nos relatórios do Goalfy e atualize os dados.

@@ -10,6 +10,7 @@ const NORM = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(
 const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const ALIAS = {
   cliente:['nomedocliente','cliente','nome'],
+  cpf:['cpf','cpfdocliente'],
   produto:['produtolead','produto','lead'],
   secundaria:['produtovendasecundaria','produtodavendasecundaria','produtodevendasecundaria','vendasecundaria','produtosecundario'],
   envio:['enviodaproposta','envio','datadeenvio','data'],
@@ -106,6 +107,7 @@ function toRows(json){
     const pend = txt(r[map.pend]).split(/[;\n|]+/).map(s=>s.trim()).filter(Boolean);
     return {
       cliente: txt(r[map.cliente]) || '—',
+      cpf: window.PendenciasCore.cpfDigits(map.cpf?r[map.cpf]:''),
       etiqueta: hasTreatmentLabel(map.etiquetas?r[map.etiquetas]:'')?'EM TRATAMENTO':'',
       tratamento: hasTreatmentLabel(map.etiquetas?r[map.etiquetas]:'')?'EM TRATAMENTO':'A TRATAR',
       produto: effectiveProduct(r[map.produto],map.secundaria?r[map.secundaria]:''),
@@ -422,15 +424,15 @@ function moveColumn(from,to){
 }
 function renderTable(rows){
   const multi = empresas().length>1;
-  const cols = [['cliente','Cliente'],['produto','Produto'],['modelo','Modelo'],['proposta','Nº Proposta','num'],['envio','Envio'],['dias','Dias parado','num'],['pend','Pendência']];
-  if(HAS.indicacao) cols.splice(3,0,['indicacao','Modelo de indicação']);
+  const cols = [['cliente','Cliente'],['produto','Produto'],['cpf','CPF'],['modelo','Modelo'],['proposta','Nº Proposta','num'],['envio','Envio'],['dias','Dias parado','num'],['pend','Pendência']];
+  if(HAS.indicacao) cols.splice(cols.findIndex(c=>c[0]==='modelo')+1,0,['indicacao','Modelo de indicação']);
   cols.push(['eficiencia','Prioridade de eficiência']);
   if(HAS.seguradora) cols.push(['seguradora','Seguradora']);
   if(HAS.susep){ cols.push(['susep','SUSEP']); cols.push(['origem','Origem da venda']); }
   cols.push(['vendedor','Vendedor']);
   if(multi) cols.push(['empresa','Empresa']);
   cols.push(['etiqueta','Etiquetas']);
-  const order=orderedKeys(columnOrder,cols.map(c=>c[0]));cols.sort((a,b)=>order.indexOf(a[0])-order.indexOf(b[0]));
+  const order=window.PendenciasCore.cpfColumnOrder(columnOrder,cols.map(c=>c[0]));cols.sort((a,b)=>order.indexOf(a[0])-order.indexOf(b[0]));
   const val = (r,k) => k==='pend' ? r.pend.join(', ') : k==='envio' ? (r.envio?r.envio.getTime():0) : (r[k]==null?-1:r[k]);
   const sorted = [...rows].sort((a,b)=>{
     const x=val(a,sort.k), y=val(b,sort.k);
